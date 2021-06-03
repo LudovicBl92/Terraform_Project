@@ -13,6 +13,20 @@ resource "aws_internet_gateway" "IG_Pub" {
         Name = "Ig_Pub"
     }
 }
+
+resource "aws_route_table" "Internet_Gateway" {
+    vpc_id = "${aws_vpc.main.id}"
+
+    route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = "${aws_internet_gateway.IG_Pub.id}"
+    }
+
+    tags = {
+        Name = "Internet_Gateway"
+    }
+}
+
 resource "aws_subnet" "Pub_Network" {
     vpc_id = "${aws_vpc.main.id}"
     cidr_block = "10.0.0.0/24"
@@ -23,6 +37,28 @@ resource "aws_subnet" "Pub_Network" {
     }
 }
 
+resource "aws_route_table_association" "Internet_traffic" {
+    subnet_id = "${aws_subnet.Pub_Network.id}"
+    route_table_id = "${aws_route_table.Internet_Gateway.id}"
+}
+
+resource "aws_security_group" "Allow_SSH" {
+    name = "SG_WEB"
+    description = "SG_WEB"
+    vpc_id = "${aws_vpc.main.id}"
+
+    ingress {
+        from_port = 22
+        to_port = 22
+        protocol = "TCP"
+        cidr_blocks = ["${var.Aws_My_IP}"]
+    }
+
+    tags = {
+        Name = "Allow SSH from My IP"
+    }
+}
+
 resource "aws_subnet" "Priv_Network" {
     vpc_id = "${aws_vpc.main.id}"
     cidr_block = "10.0.1.0/24"
@@ -30,18 +66,5 @@ resource "aws_subnet" "Priv_Network" {
 
     tags = {
       Name = "Private"
-    }
-}
-
-resource "aws_route_table" "Route_Pub_Network" {
-    vpc_id = "${aws_vpc.main.id}"
-
-    route {
-    cidr_block = "0.0.0.0/0" 
-    gateway_id = "${aws_internet_gateway.IG_Pub.id}"
-    }
-
-    tags = {
-        Name = "Route_Pub_Network"
     }
 }
