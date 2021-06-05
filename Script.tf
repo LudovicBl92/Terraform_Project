@@ -42,23 +42,43 @@ resource "aws_route_table_association" "Internet_traffic" {
     route_table_id = "${aws_route_table.Internet_Gateway.id}"
 }
 
-resource "aws_security_group" "Allow_SSH" {
+#resource "aws_security_group" "Allow_SSH" {
+#    name = "SG_WEB"
+#    description = "SG_WEB"
+#    vpc_id = "${aws_vpc.main.id}"
+
+#    ingress {
+#        from_port = 22
+#        to_port = 22
+#        protocol = "TCP"
+#        cidr_blocks = ["${var.Aws_My_IP}"]
+#    }
+
+#    tags = {
+#        Name = "Allow SSH from My IP"
+#    }
+#}
+
+resource "aws_security_group" "SG_WEB" {
     name = "SG_WEB"
     description = "SG_WEB"
     vpc_id = "${aws_vpc.main.id}"
 
-    ingress {
-        from_port = 22
-        to_port = 22
-        protocol = "TCP"
-        cidr_blocks = ["${var.Aws_My_IP}"]
-    }
-
     tags = {
-        Name = "Allow SSH from My IP"
+        Name = "SG_WEB"
     }
 }
+resource "aws_security_group_rule" "ingress_rules" {
+  count = length(var.ingress_rules)
 
+  type              = "ingress"
+  from_port         = var.ingress_rules[count.index].from_port
+  to_port           = var.ingress_rules[count.index].to_port
+  protocol          = var.ingress_rules[count.index].protocol
+  cidr_blocks       = [var.ingress_rules[count.index].cidr_block]
+  description       = var.ingress_rules[count.index].description
+  security_group_id = aws_security_group.SG_WEB.id
+}
 resource "aws_subnet" "Priv_Network" {
     vpc_id = "${aws_vpc.main.id}"
     cidr_block = "10.0.1.0/24"
