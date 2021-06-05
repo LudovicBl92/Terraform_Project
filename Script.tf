@@ -42,23 +42,6 @@ resource "aws_route_table_association" "Internet_traffic" {
     route_table_id = "${aws_route_table.Internet_Gateway.id}"
 }
 
-#resource "aws_security_group" "Allow_SSH" {
-#    name = "SG_WEB"
-#    description = "SG_WEB"
-#    vpc_id = "${aws_vpc.main.id}"
-
-#    ingress {
-#        from_port = 22
-#        to_port = 22
-#        protocol = "TCP"
-#        cidr_blocks = ["${var.Aws_My_IP}"]
-#    }
-
-#    tags = {
-#        Name = "Allow SSH from My IP"
-#    }
-#}
-
 resource "aws_security_group" "SG_WEB" {
     name = "SG_WEB"
     description = "SG_WEB"
