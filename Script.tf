@@ -31,6 +31,7 @@ resource "aws_subnet" "Pub_Network" {
     vpc_id = "${aws_vpc.main.id}"
     cidr_block = "10.0.0.0/24"
     availability_zone = "eu-west-3a"
+    map_public_ip_on_launch = true
 
     tags = {
         Name = "Public"
@@ -52,15 +53,23 @@ resource "aws_security_group" "SG_WEB" {
     }
 }
 resource "aws_security_group_rule" "ingress_rules" {
-  count = length(var.ingress_rules)
+    count = length(var.ingress_rules)
 
-  type              = "ingress"
-  from_port         = var.ingress_rules[count.index].from_port
-  to_port           = var.ingress_rules[count.index].to_port
-  protocol          = var.ingress_rules[count.index].protocol
-  cidr_blocks       = [var.ingress_rules[count.index].cidr_block]
-  description       = var.ingress_rules[count.index].description
-  security_group_id = aws_security_group.SG_WEB.id
+    type              = "ingress"
+    from_port         = var.ingress_rules[count.index].from_port
+    to_port           = var.ingress_rules[count.index].to_port
+    protocol          = var.ingress_rules[count.index].protocol
+    cidr_blocks       = [var.ingress_rules[count.index].cidr_block]
+    description       = var.ingress_rules[count.index].description
+    security_group_id = aws_security_group.SG_WEB.id
+}
+resource "aws_instance" "EC2_WEB" {
+    ami = "ami-00c08ad1a6ca8ca7c"
+    instance_type = "t2.micro"
+
+    tags = {
+      Name = "Server_Web"
+    }
 }
 resource "aws_subnet" "Priv_Network" {
     vpc_id = "${aws_vpc.main.id}"
