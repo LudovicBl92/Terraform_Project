@@ -78,6 +78,9 @@ resource "aws_security_group_rule" "egress_rules" {
 resource "aws_instance" "EC2_WEB" {
     ami = "ami-00c08ad1a6ca8ca7c"
     instance_type = "t2.micro"
+    key_name = "AWS"
+    vpc_security_group_ids = ["${aws_security_group.SG_WEB.id}"]
+    subnet_id   = aws_subnet.Pub_Network.id
 
     tags = {
       Name = "Server_Web"
