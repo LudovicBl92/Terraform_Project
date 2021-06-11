@@ -38,7 +38,7 @@ resource "aws_subnet" "Pub_Network" {
     }
 }
 
-resource "aws_route_table_association" "Internet_traffic" {
+resource "aws_route_table_association" "Public_route" {
     subnet_id = "${aws_subnet.Pub_Network.id}"
     route_table_id = "${aws_route_table.Internet_Gateway.id}"
 }
@@ -80,7 +80,7 @@ resource "aws_instance" "EC2_WEB" {
     instance_type = "t2.micro"
     key_name = "AWS"
     vpc_security_group_ids = ["${aws_security_group.SG_WEB.id}"]
-    subnet_id   = aws_subnet.Pub_Network.id
+    subnet_id   = "${aws_subnet.Pub_Network.id}"
 
     tags = {
       Name = "Server_Web"
@@ -94,4 +94,35 @@ resource "aws_subnet" "Priv_Network" {
     tags = {
       Name = "Private"
     }
+}
+
+resource "aws_eip" "NAT_EIP" {
+    vpc = true
+}
+
+resource "aws_nat_gateway" "NAT_GW" {
+    allocation_id = "${aws_eip.NAT_EIP.id}"
+    subnet_id = "${aws_subnet.Pub_Network.id}"
+
+    tags = {
+        Name = "NAT_GW"
+    }
+}
+
+resource "aws_route_table" "Private_route_table" {
+    vpc_id = "${aws_vpc.main.id}"
+
+    route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = "${aws_nat_gateway.NAT_GW.id}"
+    }
+
+    tags = {
+        Name = "NAT_Gateway"
+    }
+}
+
+resource "aws_route_table_association" "Private_route" {
+    subnet_id = "${aws_subnet.Priv_Network.id}"
+    route_table_id = "${aws_route_table.Private_route_table.id}"
 }
