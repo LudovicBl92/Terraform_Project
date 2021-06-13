@@ -44,35 +44,35 @@ resource "aws_route_table_association" "Public_route" {
 }
 
 resource "aws_security_group" "SG_WEB" {
-    name = "SG_WEB"
-    description = "SG_WEB"
+    name = "${var.security_Group_Public}"
+    description = "${var.security_Group_Public}"
     vpc_id = "${aws_vpc.main.id}"
 
     tags = {
-        Name = "SG_WEB"
+        Name = "${var.security_Group_Public}"
     }
 }
-resource "aws_security_group_rule" "ingress_rules" {
-    count = length(var.ingress_rules)
+resource "aws_security_group_rule" "ingress_rules_Pub" {
+    count = length(var.ingress_rules_Pub)
 
     type              = "ingress"
-    from_port         = var.ingress_rules[count.index].from_port
-    to_port           = var.ingress_rules[count.index].to_port
-    protocol          = var.ingress_rules[count.index].protocol
-    cidr_blocks       = [var.ingress_rules[count.index].cidr_block]
-    description       = var.ingress_rules[count.index].description
+    from_port         = var.ingress_rules_Pub[count.index].from_port
+    to_port           = var.ingress_rules_Pub[count.index].to_port
+    protocol          = var.ingress_rules_Pub[count.index].protocol
+    cidr_blocks       = [var.ingress_rules_Pub[count.index].cidr_block]
+    description       = var.ingress_rules_Pub[count.index].description
     security_group_id = aws_security_group.SG_WEB.id
 }
 
-resource "aws_security_group_rule" "egress_rules" {
-    count = length(var.ingress_rules)
+resource "aws_security_group_rule" "egress_rules_Pub" {
+    count = length(var.ingress_rules_Pub)
 
     type              = "egress"
-    from_port         = var.egress_rules[count.index].from_port
-    to_port           = var.egress_rules[count.index].to_port
-    protocol          = var.egress_rules[count.index].protocol
-    cidr_blocks       = [var.egress_rules[count.index].cidr_block]
-    description       = var.egress_rules[count.index].description
+    from_port         = var.egress_rules_Pub[count.index].from_port
+    to_port           = var.egress_rules_Pub[count.index].to_port
+    protocol          = var.egress_rules_Pub[count.index].protocol
+    cidr_blocks       = [var.egress_rules_Pub[count.index].cidr_block]
+    description       = var.egress_rules_Pub[count.index].description
     security_group_id = aws_security_group.SG_WEB.id
 }
 resource "aws_instance" "EC2_WEB" {
@@ -98,6 +98,10 @@ resource "aws_subnet" "Priv_Network" {
 
 resource "aws_eip" "NAT_EIP" {
     vpc = true
+
+    tags = {
+        Name = "NAT_EIP"
+    }
 }
 
 resource "aws_nat_gateway" "NAT_GW" {
@@ -108,7 +112,6 @@ resource "aws_nat_gateway" "NAT_GW" {
         Name = "NAT_GW"
     }
 }
-
 resource "aws_route_table" "Private_route_table" {
     vpc_id = "${aws_vpc.main.id}"
 
@@ -118,11 +121,33 @@ resource "aws_route_table" "Private_route_table" {
     }
 
     tags = {
-        Name = "NAT_Gateway"
+        Name = "NAT_Gateway_Rule"
     }
 }
+
 
 resource "aws_route_table_association" "Private_route" {
     subnet_id = "${aws_subnet.Priv_Network.id}"
     route_table_id = "${aws_route_table.Private_route_table.id}"
+}
+
+resource "aws_security_group" "SG_BDD" {
+    name = "${var.security_Group_Private}"
+    description = "${var.security_Group_Private}"
+    vpc_id = "${aws_vpc.main.id}"
+
+    tags = {
+        Name = "${var.security_Group_Private}"
+    }
+}
+resource "aws_security_group_rule" "ingress_rules_NAT" {
+    count = length(var.ingress_rules_NAT)
+
+    type              = "ingress"
+    from_port         = var.ingress_rules_NAT[count.index].from_port
+    to_port           = var.ingress_rules_NAT[count.index].to_port
+    protocol          = var.ingress_rules_NAT[count.index].protocol
+    cidr_blocks       = [aws_subnet.Pub_Network.cidr_block]
+    description       = var.ingress_rules_NAT[count.index].description
+    security_group_id = aws_security_group.SG_BDD.id
 }
