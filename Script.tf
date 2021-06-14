@@ -38,6 +38,16 @@ resource "aws_subnet" "Pub_Network" {
     }
 }
 
+resource "aws_subnet" "Priv_Network" {
+    vpc_id = "${aws_vpc.main.id}"
+    cidr_block = "10.0.1.0/24"
+    availability_zone = "eu-west-3b"
+
+    tags = {
+      Name = "Private"
+    }
+}
+
 resource "aws_route_table_association" "Public_route" {
     subnet_id = "${aws_subnet.Pub_Network.id}"
     route_table_id = "${aws_route_table.Internet_Gateway.id}"
@@ -75,6 +85,19 @@ resource "aws_security_group_rule" "egress_rules_Pub" {
     description       = var.egress_rules_Pub[count.index].description
     security_group_id = aws_security_group.SG_WEB.id
 }
+
+resource "aws_security_group_rule" "egress_rules_Pub_to_Priv" {
+    count = length(var.egress_rules_Pub_to_Priv)
+
+    type              = "egress"
+    from_port         = var.egress_rules_Pub_to_Priv[count.index].from_port
+    to_port           = var.egress_rules_Pub_to_Priv[count.index].to_port
+    protocol          = var.egress_rules_Pub_to_Priv[count.index].protocol
+    cidr_blocks       = [aws_subnet.Priv_Network.cidr_block]
+    description       = var.egress_rules_Pub_to_Priv[count.index].description
+    security_group_id = aws_security_group.SG_WEB.id
+}
+
 resource "aws_instance" "EC2_WEB" {
     ami = "ami-00c08ad1a6ca8ca7c"
     instance_type = "t2.micro"
@@ -84,15 +107,6 @@ resource "aws_instance" "EC2_WEB" {
 
     tags = {
       Name = "Server_Web"
-    }
-}
-resource "aws_subnet" "Priv_Network" {
-    vpc_id = "${aws_vpc.main.id}"
-    cidr_block = "10.0.1.0/24"
-    availability_zone = "eu-west-3b"
-
-    tags = {
-      Name = "Private"
     }
 }
 
@@ -150,4 +164,28 @@ resource "aws_security_group_rule" "ingress_rules_NAT" {
     cidr_blocks       = [aws_subnet.Pub_Network.cidr_block]
     description       = var.ingress_rules_NAT[count.index].description
     security_group_id = aws_security_group.SG_BDD.id
+}
+
+resource "aws_security_group_rule" "egress_rules_NAT" {
+    count = length(var.egress_rules_NAT)
+
+    type              = "egress"
+    from_port         = var.egress_rules_NAT[count.index].from_port
+    to_port           = var.egress_rules_NAT[count.index].to_port
+    protocol          = var.egress_rules_NAT[count.index].protocol
+    cidr_blocks       = [var.egress_rules_NAT[count.index].cidr_block]
+    description       = var.egress_rules_NAT[count.index].description
+    security_group_id = aws_security_group.SG_BDD.id
+}
+
+resource "aws_instance" "EC2_BDD" {
+    ami = "ami-00c08ad1a6ca8ca7c"
+    instance_type = "t2.micro"
+    key_name = "AWS"
+    vpc_security_group_ids = ["${aws_security_group.SG_BDD.id}"]
+    subnet_id   = "${aws_subnet.Priv_Network.id}"
+
+    tags = {
+      Name = "Server_BDD"
+    }
 }
