@@ -154,6 +154,7 @@ resource "aws_security_group" "SG_BDD" {
         Name = "${var.security_Group_Private}"
     }
 }
+
 resource "aws_security_group_rule" "ingress_rules_NAT" {
     count = length(var.ingress_rules_NAT)
 
